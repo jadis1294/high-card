@@ -1,6 +1,9 @@
+
 package it.sara.demo.service.user.impl;
 
+import it.sara.demo.dto.UserDTO;
 import it.sara.demo.exception.GenericException;
+import it.sara.demo.service.assembler.UserAssembler;
 import it.sara.demo.service.database.UserRepository;
 import it.sara.demo.service.database.model.User;
 import it.sara.demo.service.user.UserService;
@@ -8,51 +11,47 @@ import it.sara.demo.service.user.criteria.CriteriaAddUser;
 import it.sara.demo.service.user.criteria.CriteriaGetUsers;
 import it.sara.demo.service.user.result.AddUserResult;
 import it.sara.demo.service.user.result.GetUsersResult;
-import it.sara.demo.service.util.StringUtil;
+import it.sara.demo.service.util.UserUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
+/**
+ * Implementation of the UserService interface.
+ * Handles user creation and retrieval operations.
+ */
 @Slf4j
 @Service
 public class UserServiceImpl implements UserService {
 
     @Autowired
-    private StringUtil stringUtil;
-
-    @Autowired
     private UserRepository userRepository;
 
+    /**
+     * Adds a new user to the system after validating the input.
+     *
+     * @param criteria the criteria containing user data to be added
+     * @return AddUserResult containing the outcome of the operation
+     * @throws GenericException if validation fails or saving the user encounters an error
+     */
     @Override
     public AddUserResult addUser(CriteriaAddUser criteria) throws GenericException {
-
         AddUserResult returnValue;
         User user;
 
         try {
-
             returnValue = new AddUserResult();
-
-            if (stringUtil.isNullOrEmpty(criteria.getFirstName())) {
-                throw new GenericException(400, "First name is required");
-            }
-            if (stringUtil.isNullOrEmpty(criteria.getLastName())) {
-                throw new GenericException(400, "Last name is required");
-            }
-            if (stringUtil.isNullOrEmpty(criteria.getEmail())) {
-                throw new GenericException(400, "Email is required");
-            }
-            if (stringUtil.isNullOrEmpty(criteria.getPhoneNumber())) {
-                throw new GenericException(400, "Phone is required");
-            }
 
             user = new User();
             user.setFirstName(criteria.getFirstName());
             user.setLastName(criteria.getLastName());
             user.setEmail(criteria.getEmail());
             user.setPhoneNumber(criteria.getPhoneNumber());
-
-            if (!userRepository.save(user)) {
+            UserUtil.validate(user);
+            if (!this.userRepository.save(user)) {
                 throw new GenericException(500, "Error saving user");
             }
 
@@ -65,8 +64,28 @@ public class UserServiceImpl implements UserService {
         return returnValue;
     }
 
+    /**
+     * Retrieves a paginated, sorted, and filtered list of users.
+     *
+     * @param criteria the criteria containing pagination, sorting, and search parameters
+     * @return GetUsersResult containing the list of matching users
+     * @throws GenericException if pagination parameters are invalid
+     */
     @Override
-    public GetUsersResult getUsers(CriteriaGetUsers criteriaGetUsers) throws GenericException {
-        return null;
+    public GetUsersResult getUsers(CriteriaGetUsers criteria) throws GenericException {
+        UserUtil.validatePagination(criteria);
+        List<User> users = this.userRepository.getAll();
+        users = UserUtil.applySearchFilter(users, criteria.getQuery());
+        users = UserUtil.applySorting(users, criteria.getOrder());
+
+        List<User> paginated = UserUtil.applyPagination(users, criteria.getOffset(), criteria.getLimit());
+
+        List<UserDTO> dtoList = paginated.stream()
+                .map(UserAssembler::toDTO)
+                .collect(Collectors.toList());
+
+        GetUsersResult result = new GetUsersResult();
+        result.setUsers(dtoList);
+        return result;
     }
 }

@@ -7,7 +7,7 @@ import org.springframework.stereotype.Component;
 @Component
 public class UserAssembler {
 
-    public UserDTO toDTO(User user) {
+    public static UserDTO toDTO(User user) {
         UserDTO returnValue = new UserDTO();
         returnValue.setEmail(user.getEmail().substring(user.getEmail().lastIndexOf("@") + 1));
         returnValue.setGuid(user.getGuid());
