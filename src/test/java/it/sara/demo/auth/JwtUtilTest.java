@@ -19,7 +19,7 @@ import static org.junit.jupiter.api.Assertions.assertThrows;
 class JwtUtilTest {
 
     private JwtUtil jwtUtil;
-    private static final String SECRET_KEY = "your-secret-key-your-secret-key"; // almeno 256 bit
+    private static final String SECRET_KEY = "01234567890123456789012345678901"; // 32 bytes = 256 bits
     private static final String VALID_ISSUER = "your-issuer";
 
     private String generateValidToken() {
@@ -51,7 +51,7 @@ class JwtUtilTest {
 
     @BeforeEach
     void setup() {
-        jwtUtil = new JwtUtil("your-secret-key", "your-issuer");
+        jwtUtil = JwtUtil.forTests(SECRET_KEY, VALID_ISSUER);
     }
 
     @Test

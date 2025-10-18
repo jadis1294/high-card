@@ -1,0 +1,15 @@
+version: '3.8'
+services:
+  high-card:
+    build: .
+    image: high-card:local
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+    environment:
+      - SPRING_PROFILES_ACTIVE=default
+    healthcheck:
+      test: ["CMD-SHELL","curl -f http://localhost:8080/actuator/health || exit 1"]
+      interval: 10s
+      timeout: 2s
+      retries: 12

@@ -20,6 +20,7 @@ public class GenericException extends Exception {
     }
 
     public GenericException(int code, String message) {
+        super(message);
         this.status = createStatus(code, message);
     }
 
